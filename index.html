@@ -4,6 +4,23 @@
     /* Prevents iOS Safari from auto-zooming into inputs when tapped */
     input[type="text"] {
       font-size: 16px; 
+      padding: 4px;
+      margin: 3px 0;
+      box-sizing: border-box;
+    }
+    /* Touch-friendly buttons for active testing environments */
+    button {
+      padding: 12px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    #clearBtn {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-color: #f5c6cb;
     }
   </style>
 </head>
@@ -15,59 +32,120 @@
   Fixture <input type="text" inputmode="decimal" id="fixture" style="width: 60px">
   <br>
   <br>
-  RrBb = <input type="text" inputmode="decimal" id="ohm_rrbb" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rrbb" style="width: 60px"> V
+  RrBb = <input type="text" inputmode="numeric" id="ohm_rrbb" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rrbb" style="width: 60px"> V
   <br>
-  RbBr = <input type="text" inputmode="decimal" id="ohm_rbbr" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rbbr" style="width: 60px"> V
+  RbBr = <input type="text" inputmode="numeric" id="ohm_rbbr" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rbbr" style="width: 60px"> V
   <br>
-  RrBg = <input type="text" inputmode="decimal" id="ohm_rrbg" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rrbg" style="width: 60px"> V
+  RrBg = <input type="text" inputmode="numeric" id="ohm_rrbg" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rrbg" style="width: 60px"> V
   <br>
-  RbBg = <input type="text" inputmode="decimal" id="ohm_rbbg" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rbbg" style="width: 60px"> V
+  RbBg = <input type="text" inputmode="numeric" id="ohm_rbbg" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rbbg" style="width: 60px"> V
   <br>
-  RgBr = <input type="text" inputmode="decimal" id="ohm_rgbr" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rgbr" style="width: 60px"> V
+  RgBr = <input type="text" inputmode="numeric" id="ohm_rgbr" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rgbr" style="width: 60px"> V
   <br>
-  RgBb = <input type="text" inputmode="decimal" id="ohm_rgbb" style="width: 60px"> M&Omega;
-  <input type="text" inputmode="decimal" id="volt_rgbb" style="width: 60px"> V
+  RgBb = <input type="text" inputmode="numeric" id="ohm_rgbb" style="width: 60px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rgbb" style="width: 60px"> V
   <br>
   <br>
-  Input <input type="text" inputmode="decimal" id="vac" style="width: 60px"> VAC
+  Input <input type="text" inputmode="numeric" id="vac" style="width: 60px"> VAC
   <br>
-  Output <input type="text" inputmode="decimal" id="vdc" style="width: 60px"> VDC
+  Output <input type="text" inputmode="numeric" id="vdc" style="width: 60px"> VDC
   <br>
   <br>
   
-  <!-- Copy Button -->
+  <!-- Form Control Actions -->
   <button type="button" id="copyBtn" onclick="copySummary()">Copy Summary</button>
+  <button type="button" id="clearBtn" onclick="resetForm()">Clear Data</button>
 
   <p>Summary:<br><br> <output id="result"></output></p>
 </form>
 
 <script>
-// Helper function to build the text string dynamically
+// Sequential array of fields to govern 'Next' button cursor travel
+const inputOrder = [
+  'pole', 'fixture',
+  'ohm_rrbb', 'volt_rrbb',
+  'ohm_rbbr', 'volt_rbbr',
+  'ohm_rrbg', 'volt_rrbg',
+  'ohm_rbbg', 'volt_rbbg',
+  'ohm_rgbr', 'volt_rgbr',
+  'ohm_rgbb', 'volt_rgbb',
+  'vac', 'vdc'
+];
+
+// Handle keyboard "Enter" or "Next" presses on iOS keypad
+document.getElementById('readingForm').addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Prevents default browser submission behavior
+    
+    const currentId = event.target.id;
+    const currentIndex = inputOrder.indexOf(currentId);
+    
+    if (currentIndex !== -1 && currentIndex < inputOrder.length - 1) {
+      // Focus the next sequential input field down
+      document.getElementById(inputOrder[currentIndex + 1]).focus();
+    } else if (currentId === 'vdc') {
+      // If pressing Next on the very last field, execute copy action immediately
+      copySummary();
+    }
+  }
+});
+
+// Helper function to build the text string dynamically and skip blank test rows
 function generateSummary(isHtml = true) {
-  const getValue = (id) => document.getElementById(id).value;
+  const getValue = (id) => document.getElementById(id).value.trim();
   const br = isHtml ? "<br>" : "\n";
   
-  let text = `Pole ${getValue('pole')} Fixture ${getValue('fixture')}${br}`;
-  text += `RrBb = ${getValue('ohm_rrbb')} MΩ ${getValue('volt_rrbb')} V${br}`;
-  text += `RbBr = ${getValue('ohm_rbbr')} MΩ ${getValue('volt_rbbr')} V${br}`;
-  text += `RrBg = ${getValue('ohm_rrbg')} MΩ ${getValue('volt_rrbg')} V${br}`;
-  text += `RbBg = ${getValue('ohm_rbbg')} MΩ ${getValue('volt_rbbg')} V${br}`;
-  text += `RgBr = ${getValue('ohm_rgbr')} MΩ ${getValue('volt_rgbr')} V${br}`;
-  text += `RgBb = ${getValue('ohm_rgbb')} MΩ ${getValue('volt_rgbb')} V${br}`;
-  text += `Input ${getValue('vac')} VAC, Output ${getValue('vdc')} VDC`;
+  let lines = [];
   
-  return text;
+  // Header line
+  lines.push(`Pole ${getValue('pole')} Fixture ${getValue('fixture')}`);
+  
+  // Wire test pairings array configuration
+  const testPairs = [
+    { label: 'RrBb', ohm: 'ohm_rrbb', volt: 'volt_rrbb' },
+    { label: 'RbBr', ohm: 'ohm_rbbr', volt: 'volt_rbbr' },
+    { label: 'RrBg', ohm: 'ohm_rrbg', volt: 'volt_rrbg' },
+    { label: 'RbBg', ohm: 'ohm_rbbg', volt: 'volt_rbbg' },
+    { label: 'RgBr', ohm: 'ohm_rgbr', volt: 'volt_rgbr' },
+    { label: 'RgBb', ohm: 'ohm_rgbb', volt: 'volt_rgbb' }
+  ];
+  
+  // Only compile the line if at least one data point was typed for that pair
+  testPairs.forEach(pair => {
+    const oVal = getValue(pair.ohm);
+    const vVal = getValue(pair.volt);
+    if (oVal || vVal) {
+      lines.push(`${pair.label} = ${oVal} MΩ ${vVal} V`);
+    }
+  });
+  
+  // Transformer power input/output tracking line
+  const vacVal = getValue('vac');
+  const vdcVal = getValue('vdc');
+  if (vacVal || vdcVal) {
+    lines.push(`Input ${vacVal} VAC, Output ${vdcVal} VDC`);
+  }
+  
+  return lines.join(br);
 }
 
 // Update the live HTML preview whenever a user types
 document.getElementById('readingForm').addEventListener('input', () => {
   document.getElementById('result').innerHTML = generateSummary(true);
 });
+
+// Resets all values and wipes preview clean
+function resetForm() {
+  if (confirm("Are you sure you want to clear all data?")) {
+    document.getElementById('readingForm').reset();
+    document.getElementById('result').innerHTML = '';
+  }
+}
 
 // Upgraded Copy Engine to handle both online and offline iOS environments
 function copySummary() {
@@ -83,32 +161,25 @@ function copySummary() {
     }, 1500);
   };
 
-  // 1. Primary Strategy: Try standard secure API
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(plainText)
       .then(successAction)
       .catch(() => fallbackCopy(plainText, successAction));
   } else {
-    // 2. Secondary Strategy: Fallback immediately if API is blocked by iOS local file security
     fallbackCopy(plainText, successAction);
   }
 }
 
-// Invisible textarea technique that forces old iOS systems and offline files to copy successfully
 function fallbackCopy(text, callback) {
   const textArea = document.createElement("textarea");
   textArea.value = text;
-  
-  // Keep it hidden away from the user's screen layout
   textArea.style.position = "fixed";
   textArea.style.left = "-999999px";
   textArea.style.top = "-999999px";
   document.body.appendChild(textArea);
-  
-  // Highlight and trigger native copy
   textArea.focus();
   textArea.select();
-  textArea.setSelectionRange(0, 99999); // Vital selection trick for older iOS Safari editions
+  textArea.setSelectionRange(0, 99999);
   
   try {
     document.execCommand('copy');
