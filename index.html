@@ -1,0 +1,122 @@
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Prevents iOS Safari from auto-zooming into inputs when tapped */
+    input[type="text"] {
+      font-size: 16px; 
+    }
+  </style>
+</head>
+
+<h2>Reading Compiler</h2>
+<form id="readingForm">
+
+  Pole <input type="text" inputmode="text" autocapitalize="characters" id="pole" style="width: 30px">
+  Fixture <input type="text" inputmode="numeric" id="fixture" style="width: 30px">
+  <br>
+  <br>
+  RrBb = <input type="text" inputmode="numeric" id="ohm_rrbb" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rrbb" style="width: 40px"> V
+  <br>
+  RbBr = <input type="text" inputmode="numeric" id="ohm_rbbr" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rbbr" style="width: 40px"> V
+  <br>
+  RrBg = <input type="text" inputmode="numeric" id="ohm_rrbg" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rrbg" style="width: 40px"> V
+  <br>
+  RbBg = <input type="text" inputmode="numeric" id="ohm_rbbg" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rbbg" style="width: 40px"> V
+  <br>
+  RgBr = <input type="text" inputmode="numeric" id="ohm_rgbr" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rgbr" style="width: 40px"> V
+  <br>
+  RgBb = <input type="text" inputmode="numeric" id="ohm_rgbb" style="width: 40px"> M&Omega;
+  <input type="text" inputmode="numeric" id="volt_rgbb" style="width: 40px"> V
+  <br>
+  <br>
+  Input <input type="text" inputmode="numeric" id="vac" style="width: 40px"> VAC
+  <br>
+  Output <input type="text" inputmode="numeric" id="vdc" style="width: 40px"> VDC
+  <br>
+  <br>
+  
+  <!-- Copy Button -->
+  <button type="button" id="copyBtn" onclick="copySummary()">Copy Summary</button>
+
+  <p>Summary:<br><br> <output id="result"></output></p>
+</form>
+
+<script>
+// Helper function to build the text string dynamically
+function generateSummary(isHtml = true) {
+  const getValue = (id) => document.getElementById(id).value;
+  const br = isHtml ? "<br>" : "\n";
+  
+  let text = `Pole ${getValue('pole')} Fixture ${getValue('fixture')}${br}`;
+  text += `RrBb = ${getValue('ohm_rrbb')} MΩ ${getValue('volt_rrbb')} V${br}`;
+  text += `RbBr = ${getValue('ohm_rbbr')} MΩ ${getValue('volt_rbbr')} V${br}`;
+  text += `RrBg = ${getValue('ohm_rrbg')} MΩ ${getValue('volt_rrbg')} V${br}`;
+  text += `RbBg = ${getValue('ohm_rbbg')} MΩ ${getValue('volt_rbbg')} V${br}`;
+  text += `RgBr = ${getValue('ohm_rgbr')} MΩ ${getValue('volt_rgbr')} V${br}`;
+  text += `RgBb = ${getValue('ohm_rgbb')} MΩ ${getValue('volt_rgbb')} V${br}`;
+  text += `Input ${getValue('vac')} VAC, Output ${getValue('vdc')} VDC`;
+  
+  return text;
+}
+
+// Update the live HTML preview whenever a user types
+document.getElementById('readingForm').addEventListener('input', () => {
+  document.getElementById('result').innerHTML = generateSummary(true);
+});
+
+// Upgraded Copy Engine to handle both online and offline iOS environments
+function copySummary() {
+  const plainText = generateSummary(false);
+  const btn = document.getElementById("copyBtn");
+
+  const successAction = () => {
+    btn.innerText = "Copied!";
+    btn.style.backgroundColor = "#d4edda";
+    setTimeout(() => {
+      btn.innerText = "Copy Summary";
+      btn.style.backgroundColor = "";
+    }, 1500);
+  };
+
+  // 1. Primary Strategy: Try standard secure API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(plainText)
+      .then(successAction)
+      .catch(() => fallbackCopy(plainText, successAction));
+  } else {
+    // 2. Secondary Strategy: Fallback immediately if API is blocked by iOS local file security
+    fallbackCopy(plainText, successAction);
+  }
+}
+
+// Invisible textarea technique that forces old iOS systems and offline files to copy successfully
+function fallbackCopy(text, callback) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  
+  // Keep it hidden away from the user's screen layout
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
+  document.body.appendChild(textArea);
+  
+  // Highlight and trigger native copy
+  textArea.focus();
+  textArea.select();
+  textArea.setSelectionRange(0, 99999); // Vital selection trick for older iOS Safari editions
+  
+  try {
+    document.execCommand('copy');
+    callback();
+  } catch (err) {
+    console.error("Fallback copy failed", err);
+  }
+  
+  document.body.removeChild(textArea);
+}
+</script>
