@@ -95,8 +95,8 @@
 <div id="entryList"></div>
 
 <script>
-// Array tracking current saved entries in memory
-let savedEntries = [];
+// Load existing saved entries from memory or initialize empty array
+let savedEntries = JSON.parse(localStorage.getItem('compilerBatchData')) || [];
 
 // Order array for keyboard navigation and matching data indices
 const inputOrder = [
@@ -104,6 +104,9 @@ const inputOrder = [
   'ohm_rrbg', 'volt_rrbg', 'ohm_rbbg', 'volt_rbbg', 'ohm_rgbr', 'volt_rgbr',
   'ohm_rgbb', 'volt_rgbb', 'vac', 'vdc'
 ];
+
+// Run initial rendering loop to display previously saved data on refresh
+renderList();
 
 // iPhone Next Keypad advancement structure
 document.getElementById('readingForm').addEventListener('keydown', function(event) {
@@ -165,11 +168,14 @@ function addEntryToList() {
   
   const entryText = generateSummaryText();
   
-  // Save both generated plain text and raw input values for easy editing extraction
+  // Save both generated plain text and raw input values
   savedEntries.push({ text: entryText, raw: rawData });
   
   // Sort entries numerically based on the fixture value
   sortEntriesByFixture();
+  
+  // Save state update down to local memory
+  updateLocalStorage();
   
   // Completely wipe all form fields out, including Pole
   document.getElementById('readingForm').reset();
@@ -178,13 +184,17 @@ function addEntryToList() {
   renderList();
 }
 
-// Sort engine evaluating fixture input properties numerically
 function sortEntriesByFixture() {
   savedEntries.sort((a, b) => {
     const fixA = parseFloat(a.raw.fixture) || 0;
     const fixB = parseFloat(b.raw.fixture) || 0;
     return fixA - fixB;
   });
+}
+
+// Updates LocalStorage cache state string configuration
+function updateLocalStorage() {
+  localStorage.setItem('compilerBatchData', JSON.stringify(savedEntries));
 }
 
 // Render entries dynamically into standard HTML structures
@@ -221,25 +231,23 @@ function copyAllEntries() {
   triggerExecutionCopy(fullBatchReport, btn, "Batch Copied!");
 }
 
-// Extracts dynamic object state and populates the main editing form
 function editEntry(index) {
   const entry = savedEntries[index];
   
-  // Load card data directly back into the inputs
   inputOrder.forEach(id => {
     document.getElementById(id).value = entry.raw[id] || '';
   });
   
-  // Remove the old entry card from the lower queue list
   savedEntries.splice(index, 1);
+  updateLocalStorage(); // Commit update state changes to disk
   renderList();
   
-  // Send focus straight back to the Pole field to start working
   document.getElementById('pole').focus();
 }
 
 function deleteEntry(index) {
   savedEntries.splice(index, 1);
+  updateLocalStorage(); // Commit item reduction to persistent disk memory
   renderList();
 }
 
@@ -250,8 +258,9 @@ function resetFormFields() {
 }
 
 function clearEntireBatch() {
-  if (confirm("Delete ALL entries in the batch log below?")) {
+  if (confirm("Delete ALL entries in the batch log below? This will permanently wipe saved browser memory!")) {
     savedEntries = [];
+    localStorage.removeItem('compilerBatchData'); // Clear memory partition completely
     renderList();
   }
 }
@@ -281,14 +290,3 @@ function triggerExecutionCopy(textStr, buttonEl, successLabel) {
 
 function fallbackCopyEngine(text, callback) {
   const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.left = "-999999px";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-  textArea.setSelectionRange(0, 99999);
-  try { document.execCommand('copy'); callback(); } catch (err) { console.error(err); }
-  document.body.removeChild(textArea);
-}
-</script>
