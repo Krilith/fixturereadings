@@ -52,7 +52,7 @@
   </style>
 </head>
 
-<h2>Reading Compiler Batch Logger</h2>
+<h2>Fixture Readings</h2>
 <form id="readingForm">
 
   Pole <input type="text" inputmode="text" autocapitalize="characters" id="pole" style="width: 60px">
@@ -83,14 +83,14 @@
   
   <!-- Primary Commands -->
   <button type="button" id="addBtn" onclick="addEntryToList()">Add Entry to List</button>
-  <button type="button" id="clearFormBtn" onclick="resetFormFields()">Reset Form Fields</button>
+  <button type="button" id="clearFormBtn" onclick="resetFormFields()">Clear Form Fields</button>
 </form>
 
 <hr>
 
-<h3>Log Batch Queue</h3>
-<button type="button" id="copyAllBtn" onclick="copyAllEntries()">Copy Entire Batch Report</button>
-<button type="button" class="delete-btn" onclick="clearEntireBatch()">Clear Entire Batch</button>
+<h3>Readings History</h3>
+<button type="button" id="copyAllBtn" onclick="copyAllEntries()">Copy Report</button>
+<button type="button" class="delete-btn" onclick="clearEntireBatch()">Clear Report</button>
 
 <div id="entryList"></div>
 
@@ -250,7 +250,7 @@ function resetFormFields() {
 }
 
 function clearEntireBatch() {
-  if (confirm("Delete ALL entries in the batch log below?")) {
+  if (confirm("Delete ALL entries in the history below?")) {
     savedEntries = [];
     renderList();
   }
